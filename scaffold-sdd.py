@@ -55,9 +55,16 @@ Every task requires a Validation Phase:
 - **Autonomy:** Analyze errors independently before asking the user.
 
 ## 5. Terminal Command Protocol
-- **Atomic Execution:** One logical command per tool call.
-- **No sequential chaining:** Do NOT use `;` or `&&` to join independent
-  commands. Each must be issued and verified separately.
+- **Atomic Execution:** Execute exactly ONE command per tool call. No exceptions.
+- **No sequential chaining:** Do NOT use `;`, `&&`, or `||` to join commands. Each
+  command must be its own separate tool call, even if the commands are
+  trivially related (e.g., creating a directory and then creating a file
+  inside it).
+- **Forbidden examples:**
+  - `mkdir foo; touch foo/.gitkeep`          ← TWO tool calls
+  - `npm install && npm run build`           ← TWO tool calls
+  - `New-Item -ItemType Directory "x"; New-Item -ItemType File "x/.gitkeep"`
+    ← TWO tool calls
 - **Pipes are acceptable:** A single pipeline for data transformation counts
   as one command (e.g., `cat data.json | jq '.items'`).
 
@@ -106,6 +113,10 @@ Every task follows this exact sequence:
 """,
 
 ".agent/rules/01-coding-build.md": """\
+---
+trigger: always_on
+---
+
 # Rule 01: Coding Standards & Buildability
 
 ## 1. Test-Driven Development (TDD)
@@ -127,6 +138,13 @@ When TDD is infeasible (complex UI scaffolding, undocumented APIs, etc.):
 - Never silently swallow errors.
 - Bare `except:` (Python) or empty `catch {}` (JS/TS) blocks are forbidden.
 - Errors must be logged with sufficient context or re-raised to the caller.
+
+## 4. Terminal Command Discipline
+- Execute exactly **one** command per tool call. Never use `;`, `&&`, or
+  `||` to chain multiple commands.
+- This applies even to trivially related commands such as creating a
+  directory and then creating a file inside it.
+- See System Prompt §5 for the full Terminal Command Protocol.
 """,
 
 ".agent/rules/02-knowledge.md": """\
@@ -171,11 +189,14 @@ Future agents MUST read this file before beginning work.
 # During-Task Checklist
 
 1. **Atomic execution** — work on one file or module at a time.
-2. **Frequent builds** — use terminal execution tools to run compilation /
+2. **One command per tool call** — never chain commands with `;`, `&&`, or
+   `||`. Even trivially related commands (e.g., `mkdir` + `touch`) must be
+   separate tool calls.
+3. **Frequent builds** — use terminal execution tools to run compilation /
    linting after every logical unit.
-3. **UI verification** — if modifying frontend code, use browser verification
+4. **UI verification** — if modifying frontend code, use browser verification
    tools to check rendering and console for errors.
-4. **Obstacle logging** — if a dependency fails, an API is deprecated, or a
+5. **Obstacle logging** — if a dependency fails, an API is deprecated, or a
    workaround is needed, log it immediately in `docs/OBSTACLES.md`.
 """,
 

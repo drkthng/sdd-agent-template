@@ -59,9 +59,16 @@ Every task requires a Validation Phase:
 - **Autonomy:** Analyze errors independently before asking the user.
 
 ## 5. Terminal Command Protocol
-- **Atomic Execution:** One logical command per tool call.
-- **No sequential chaining:** Do NOT use `;` or `&&` to join independent
-  commands. Each must be issued and verified separately.
+- **Atomic Execution:** Execute exactly ONE command per tool call. No exceptions.
+- **No sequential chaining:** Do NOT use `;`, `&&`, or `||` to join commands. Each
+  command must be its own separate tool call, even if the commands are
+  trivially related (e.g., creating a directory and then creating a file
+  inside it).
+- **Forbidden examples:**
+  - `mkdir foo; touch foo/.gitkeep`          ← TWO tool calls
+  - `npm install && npm run build`           ← TWO tool calls
+  - `New-Item -ItemType Directory "x"; New-Item -ItemType File "x/.gitkeep"`
+    ← TWO tool calls
 - **Pipes are acceptable:** A single pipeline for data transformation counts
   as one command (e.g., `cat data.json | jq '.items'`).
 
