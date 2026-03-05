@@ -40,6 +40,24 @@ making design decisions. Every task item must include:
    state the import path explicitly (e.g., `from alphaforge.models import
    Base`).
 
+**Bad example** (DO NOT DO THIS):
+```
+- [ ] Fix bare except in 3_Strategy_Detail.py
+- [ ] Add tests for equity chart
+```
+**Good example** (DO THIS):
+```
+### 2b. Fix bare `except:` (line 51-52)
+File: `dashboard/pages/3_Strategy_Detail.py`
+Replace:
+    except:
+        pass
+With:
+    except (ValueError, TypeError):
+        pass
+[VERIFY]: python -m py_compile dashboard/pages/3_Strategy_Detail.py → OK
+```
+
 ## 3. Verification Before Completion
 Every task requires a Validation Phase:
 - **Code tasks:** You MUST use terminal execution tools to run the build
@@ -59,16 +77,9 @@ Every task requires a Validation Phase:
 - **Autonomy:** Analyze errors independently before asking the user.
 
 ## 5. Terminal Command Protocol
-- **Atomic Execution:** Execute exactly ONE command per tool call. No exceptions.
-- **No sequential chaining:** Do NOT use `;`, `&&`, or `||` to join commands. Each
-  command must be its own separate tool call, even if the commands are
-  trivially related (e.g., creating a directory and then creating a file
-  inside it).
-- **Forbidden examples:**
-  - `mkdir foo; touch foo/.gitkeep`          ← TWO tool calls
-  - `npm install && npm run build`           ← TWO tool calls
-  - `New-Item -ItemType Directory "x"; New-Item -ItemType File "x/.gitkeep"`
-    ← TWO tool calls
+- **Atomic Execution:** One logical command per tool call.
+- **No sequential chaining:** Do NOT use `;` or `&&` to join independent
+  commands. Each must be issued and verified separately.
 - **Pipes are acceptable:** A single pipeline for data transformation counts
   as one command (e.g., `cat data.json | jq '.items'`).
 
@@ -90,3 +101,14 @@ Every task requires a Validation Phase:
    - Testing framework as required by the Spec
    - Common pitfalls specific to that stack
 5. Commit the new rule file: `chore: add <stack> agent rules`.
+
+## 7. Mode-Transition Protocol
+At every mode transition (PLANNING → EXECUTION, EXECUTION → VERIFICATION,
+or any backtrack), re-read the corresponding workflow file:
+- **Starting work:** `.agent/workflows/pre-task.md`
+- **During implementation:** `.agent/workflows/during-task.md`
+- **Finishing up:** `.agent/workflows/post-task.md`
+
+Do NOT rely on your memory of these files from earlier in the session.
+Context degrades over long conversations — re-read the file and execute
+each step literally.
